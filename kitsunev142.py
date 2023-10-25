@@ -170,9 +170,21 @@ class BrowserWindow(QMainWindow):
     def on_context_menu(self, event, web_view):
         context_menu = QMenu(self)
 
-        open_in_new_tab_action = QAction("duplicate tab", self)
+        open_in_new_tab_action = QAction("Open in New Tab", self)
         open_in_new_tab_action.triggered.connect(lambda: self.open_in_new_tab(web_view))
         context_menu.addAction(open_in_new_tab_action)
+
+        reload_action = QAction("Reload", self)
+        reload_action.triggered.connect(lambda: self.reload_page())
+        context_menu.addAction(reload_action)
+
+        back_action = QAction("Back", self)
+        back_action.triggered.connect(lambda: self.navigate_back())
+        context_menu.addAction(back_action)
+
+        forward_action = QAction("Forward", self)
+        forward_action.triggered.connect(lambda: self.navigate_forward())
+        context_menu.addAction(forward_action)
 
         context_menu.exec_(web_view.mapToGlobal(event))
 
