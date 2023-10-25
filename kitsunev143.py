@@ -19,6 +19,7 @@ class BrowserWindow(QMainWindow):
 
         self.tabs = []  # List to store references to QWebEngineView objects
         self.history = []  # List to store the history of visited pages
+        self.history_dialog = None  # Variable to store the history dialog
 
         self.create_toolbar()
         self.create_actions()
@@ -55,6 +56,7 @@ class BrowserWindow(QMainWindow):
         self.toolbar.addAction(self.fullscreen_action)
 
         self.history_action = QAction(QIcon("history.png"), "", self)
+        self.history_action.setCheckable(True)
         self.history_action.triggered.connect(self.show_history)
         self.toolbar.addAction(self.history_action)
 
@@ -151,17 +153,21 @@ class BrowserWindow(QMainWindow):
             self.showFullScreen()
 
     def show_history(self):
-        history_dialog = QDialog(self)
-        history_dialog.setWindowTitle("History")
-        layout = QVBoxLayout()
+        if self.history_dialog is not None and self.history_dialog.isVisible():
+            self.history_dialog.close()
+            self.history_action.setChecked(False)
+        else:
+            self.history_dialog = QDialog(self)
+            self.history_dialog.setWindowTitle("History")
+            layout = QVBoxLayout()
 
-        for page in self.history:
-            button = QPushButton(page)
-            button.clicked.connect(lambda _, url=page: self.load_url_from_history(url))
-            layout.addWidget(button)
+            for page in self.history:
+                button = QPushButton(page)
+                button.clicked.connect(lambda _, url=page: self.load_url_from_history(url))
+                layout.addWidget(button)
 
-        history_dialog.setLayout(layout)
-        history_dialog.exec_()
+            self.history_dialog.setLayout(layout)
+            self.history_dialog.exec_()
 
     def load_url_from_history(self, url):
         web_view = self.tabs[self.tab_widget.currentIndex()]
@@ -175,16 +181,20 @@ class BrowserWindow(QMainWindow):
         context_menu.addAction(open_in_new_tab_action)
 
         reload_action = QAction("Reload", self)
-        reload_action.triggered.connect(lambda: self.reload_page())
+        reload_action.triggered.connect(web_view.reload)
         context_menu.addAction(reload_action)
 
         back_action = QAction("Back", self)
-        back_action.triggered.connect(lambda: self.navigate_back())
+        back_action.triggered.connect(web_view.back)
         context_menu.addAction(back_action)
 
         forward_action = QAction("Forward", self)
-        forward_action.triggered.connect(lambda: self.navigate_forward())
+        forward_action.triggered.connect(web_view.forward)
         context_menu.addAction(forward_action)
+
+        full_screen_action = QAction("Toggle Full Screen", self)
+        full_screen_action.triggered.connect(self.toggle_fullscreen)
+        context_menu.addAction(full_screen_action)
 
         context_menu.exec_(web_view.mapToGlobal(event))
 
