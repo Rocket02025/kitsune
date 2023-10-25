@@ -1,6 +1,6 @@
 import sys
 import re
-from PyQt5.QtCore import QUrl, Qt  # Added the import for Qt
+from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QLineEdit, QToolBar, QTabWidget, QDialog, QVBoxLayout, QPushButton, QMenu
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -19,7 +19,7 @@ class BrowserWindow(QMainWindow):
 
         self.tabs = []  # List to store references to QWebEngineView objects
         self.history = []  # List to store the history of visited pages
-        self.history_dialog = None  # Variable to store the history dialog
+        self.history_dialog = None
 
         self.create_toolbar()
         self.create_actions()
@@ -56,9 +56,10 @@ class BrowserWindow(QMainWindow):
         self.toolbar.addAction(self.fullscreen_action)
 
         self.history_action = QAction(QIcon("history.png"), "", self)
-        self.history_action.setCheckable(True)
         self.history_action.triggered.connect(self.show_history)
         self.toolbar.addAction(self.history_action)
+
+        self.toolbar.setContextMenuPolicy(Qt.PreventContextMenu)  # Disabling context menu for the toolbar
 
     def create_actions(self):
         self.quit_action = QAction("Quit", self)
@@ -153,10 +154,7 @@ class BrowserWindow(QMainWindow):
             self.showFullScreen()
 
     def show_history(self):
-        if self.history_dialog is not None and self.history_dialog.isVisible():
-            self.history_dialog.close()
-            self.history_action.setChecked(False)
-        else:
+        if self.history_dialog is None:
             self.history_dialog = QDialog(self)
             self.history_dialog.setWindowTitle("History")
             layout = QVBoxLayout()
@@ -167,7 +165,11 @@ class BrowserWindow(QMainWindow):
                 layout.addWidget(button)
 
             self.history_dialog.setLayout(layout)
-            self.history_dialog.exec_()
+
+        if self.history_dialog.isVisible():
+            self.history_dialog.hide()
+        else:
+            self.history_dialog.show()
 
     def load_url_from_history(self, url):
         web_view = self.tabs[self.tab_widget.currentIndex()]
@@ -176,9 +178,9 @@ class BrowserWindow(QMainWindow):
     def on_context_menu(self, event, web_view):
         context_menu = QMenu(self)
 
-        open_in_new_tab_action = QAction("Open in New Tab", self)
-        open_in_new_tab_action.triggered.connect(lambda: self.open_in_new_tab(web_view))
-        context_menu.addAction(open_in_new_tab_action)
+        duplicate_tab_action = QAction("Duplicate Tab", self)
+        duplicate_tab_action.triggered.connect(lambda: self.duplicate_tab(web_view))
+        context_menu.addAction(duplicate_tab_action)
 
         reload_action = QAction("Reload", self)
         reload_action.triggered.connect(web_view.reload)
@@ -198,7 +200,7 @@ class BrowserWindow(QMainWindow):
 
         context_menu.exec_(web_view.mapToGlobal(event))
 
-    def open_in_new_tab(self, web_view):
+    def duplicate_tab(self, web_view):
         current_url = web_view.url().toString()
         self.create_new_tab(current_url)
 
